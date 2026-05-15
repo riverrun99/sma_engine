@@ -605,8 +605,6 @@ bar data for all of them. The engine skips silently on fetch failure.
 **Data quality** — Webull's developer API is retail-grade. Minor OHLC
 discrepancies can cause hits to appear or disappear versus primary exchange data.
 
-**Transaction costs** — backtests do not model fees or slippage.
-
 ---
 
 ## Disclaimer
