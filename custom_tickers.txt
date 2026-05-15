@@ -1,0 +1,14 @@
+# =============================================================================
+# CUSTOM TICKERS — added to the universe every cycle
+#
+# Hot-reloaded every cycle. No restart needed.
+# One ticker per line. Lines starting with # are comments.
+#
+# Use this to add tickers you want to track without editing engine.py.
+# These stack on top of whatever ENGINE_UNIVERSE is set to.
+#
+# Example:
+#   RDDT    # Reddit, added after IPO
+#   HOOD    # Robinhood, watching for setup
+# =============================================================================
+

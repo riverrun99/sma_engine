@@ -1,0 +1,113 @@
+# =============================================================================
+# MUTED TICKERS — engine skips these entirely each cycle
+#
+# Hot-reloaded every cycle. No restart needed.
+# One ticker per line. Lines starting with # are comments.
+#
+# Use this to filter out:
+#   - Bond ETFs that accumulate noise hits (VTIP, STIP, HYG, JNK)
+#   - Low-float names you've already acted on or don't trade
+#   - Any ticker dominating results you don't care about
+#
+# Example:
+#   VTIP    # bond ETF, too stable, noise hits
+#   ESPR    # acted on, muting for now
+# =============================================================================
+
+
+ESPR
+CCRN
+VTIP
+STIP
+AKBA
+APLS
+GOSS
+IQ
+NFE
+FPE
+RCKT
+WIT
+FSP
+TPVG
+GERN
+JNK
+
+GRAB
+BLNK
+BNDX
+GNL
+NNOX
+CHRS
+RC
+BTAI
+CMPX
+GEVO
+BRSP
+PFFD
+CGEN
+IVR
+ALXO
+REI
+TWO
+VTEX
+MFA
+HCAT
+MNKD
+TIP
+CHGG
+RXRX
+ALLO
+BND
+EARN
+LADR
+ESRT
+
+EVGN
+BNGO
+INDO
+ACRE
+ACCO
+
+PCY
+PFF
+IEF
+BWX
+VCSH
+VCIT
+JEPQ
+ARR
+AGNC
+GALT
+OSUR
+CYCN
+PMVP
+BFLY
+EDIT
+CTMX
+TELA
+NWBI
+SHO
+EFC
+MOMO
+
+SJB
+
+UUP
+
+PST
+ENB
+ET
+WEN
+BULL
+
+EUO
+ERNA
+DUG
+EPV
+FXP
+PW
+BRLT
+RPAY
+RSSS
+CFFN
+BBD
