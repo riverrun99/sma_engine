@@ -98,8 +98,7 @@ winner is the cycle's output signal.
 
 The engine maintains a hash map keyed by `[ticker / timeframe / outfit]`. Every
 hit updates the entry: incrementing hit count, adding deciseconds to the running
-total for that SMA period, and updating the key variable. This is the same
-structure Raul describes in his methodology — each cell accumulates time-series
+total for that SMA period, and updating the key variable. Each cell accumulates time-series
 evidence independently.
 
 ### Market regime
