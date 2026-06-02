@@ -111,3 +111,80 @@ RPAY
 RSSS
 CFFN
 BBD
+BROS
+CRWV
+NFBK
+UMAC
+WBD
+
+# Small community banks
+RVSB
+FNWB
+ALEC
+PROV
+KELYA
+SHBI
+
+# Top signal mutes
+SZK
+METD
+SMDD
+AAPD
+GGLS
+
+# Micro caps / illiquid
+IVDA
+XOMA
+EVMO
+SPOK
+ZNTL
+TTEC
+
+# Bond / commodity ETFs
+HYG
+BNDW
+SOYB
+DBA
+
+# Tiny office / net lease REITs
+PDM
+DEI
+FBRT
+NTST
+OLP
+GOOD
+CHCT
+SQFT
+BRT
+LAND
+AMDD
+CMTG
+MSFO
+SPDN
+TRTX
+MSFD
+SCC
+
+# Biotech microcaps
+BCAB
+FATE
+CODX
+GNSS
+SABS
+SPRO
+GNTA
+NKTX
+ARDX
+ACRS
+TCRT
+SVRA
+TBPH
+ELAB
+CLAR
+
+# China / EM small caps
+NIO
+WB
+SEA
+ITUB
+EWH

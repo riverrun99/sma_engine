@@ -138,6 +138,8 @@ def evaluate_signal(
 
     actual_entry = float(df["open"].iloc[entry_idx])
     actual_exit = float(df["close"].iloc[exit_idx])
+    if actual_entry == 0:
+        return None
     return_pct = direction * (actual_exit - actual_entry) / actual_entry
 
     return Trade(

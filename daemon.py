@@ -325,6 +325,7 @@ def main():
     timeframes = os.environ.get("ENGINE_TIMEFRAMES", "5m,15m,30m,1h,1d").split(",")
     top_n_count = int(os.environ.get("ENGINE_TOP_N", "50"))
     regime_every = int(os.environ.get("ENGINE_REGIME_EVERY", "12"))  # cycles
+    backtest_every = int(os.environ.get("ENGINE_BACKTEST_EVERY", "0"))  # 0 = disabled
     terminal_enabled = os.environ.get("TERMINAL_UI", "true").lower() in ("true", "1", "yes")
     output_dir = os.environ.get("LOCAL_OUTPUT_DIR", "./output")
 
@@ -410,6 +411,15 @@ def main():
             except Exception as e:
                 logging.exception(f"Cycle failed: {e}")
                 persistent_cache = {}  # reset cache on crash to avoid stale data
+
+            # ── Auto-backtest ──────────────────────────────────────────────
+            if backtest_every > 0 and cycle_count > 0 and cycle_count % backtest_every == 0:
+                try:
+                    import run_backtest
+                    logging.info(f"Running auto-backtest (cycle {cycle_count})...")
+                    run_backtest.run(method="walk_forward", horizon_bars=5, top_n=100)
+                except Exception as e:
+                    logging.warning(f"Auto-backtest failed: {e}")
 
             cycle_count += 1
             elapsed = time.monotonic() - start
