@@ -1,5 +1,55 @@
 # Changelog — SMA Engine Updates
 
+## 2026-06-02 (Session 2)
+
+### Discovery Engine — New File: `discovery_engine.py`
+- Built a second, parallel engine for early signal detection
+- Scans candle cache for tickers where price touches a significant SMA for the **first time in N bars** (default: 100 bars absence)
+- Surfaces structural "first touch" setups before they accumulate enough hits to rank in the main engine
+- Example signal type: LAC touching MA420 at $3.96 — the structural low the main engine missed
+- All SMA periods from all outfits scanned; results sorted by SMA period (longest first)
+- Flags direction: `from_above` (support tap) vs `from_below` (resistance tap)
+- Output: terminal print + timestamped CSV saved to `output/discovery/discovery_YYYY-MM-DD_HH-MM-SS.csv`
+- Does NOT modify any existing engine files
+- Usage: `docker exec e47_engine python /app/discovery_engine.py`
+- Options: `--absence N`, `--min-period N`, `--timeframes 1d,1w`, `--tolerance 0.002`
+- First run surfaced 84 unique daily/weekly/monthly signals — only 2 overlapped with main ranker output
+
+### Engine Config Changes
+- `ENGINE_LOOKBACK` changed from 999 → 50 (scores only the 50 most recent bars for hits; SMA calculations still use full history)
+- `RYCEY` (Rolls-Royce ADR) added to `custom_tickers.txt` — UK small modular reactor developer, nuclear theme
+
+### Muted Tickers (additional)
+- KBWY, JFIN, OCFC, FULT, RSKD, KITT, GFAI, WTIU, WTI, APLD — muted as noise or parabolic/extended
+- MGYR, HBAN, HBANM, MFIN, VMBS, OCFC, AGG, INTL, PINE, FULT — additional noise mutes
+
+### Custom Tickers — Major Universe Expansion
+Added 200+ tickers across 8 batches covering:
+- **Watchlist ETFs:** NAT, OWL, VIXM, VIXY, ZIM, SCO, FRO, TBT, FAZ, EXC, BAC, BNO, KIE, XLE, ZROZ, WFC, TLT, SHEL, BX, JPM, GLD, YCL, UUP, TMF, XLF, FXY, MDLZ, SHY, JNK, LQD, SPY, GUSH, SVXY, BND, TQQQ, TIP, PLTR, LABU, COIN, BITO, MSTU, JBLU, SOXS, MARA, KOLD, SDOW, SPDN, CPB, CWEB, KWEB, NVDD, SCHD
+- **Discovery batch:** MZZ, DRN, ICAGY, SMR, TSLL, SILJ, AAPU, ENPH, ORCX, IYR, FAS, MSTR, ORCL, TSLA, BTBT, MYY, PSLV, UMDD, CONI, ICSH, BABA, Q, AAPL, ARM
+- **Energy/commodities:** SOXL, XOP, UCO, USO, BOIL, ETR, GEV, SO, DUK, GEVO, RIVN, VNQ, VZ, JEPQ, SVOL, T, AGG, JEPI, PFE, MSOS, AI, SOFI, LYFT, NKE
+- **Energy majors/midstream:** EP, XOM, OXY, MPLX, HESM, CVX, COP, IYE, AM, EOG, WMB, VST, ERX, ENB, SLB, OKLO, LIN, PAA
+- **Industrials/automation:** DE, VIS, ALB, SUPL, DHR, HON, EMR, RTX, ROK, TER, CGNX, ZBH, SIEGY, SBGSY, DNZOY, SEKEY, KNNGF, YASKY, KYCCF
+- **Mega cap tech/semis:** NVDA, MSFT, GOOG, META, AMZN, AAPL, TSM, AVGO, ASML, AMD, KLAC, QCOM, MU, MCHP, ADI, TXN, NXPI, SMCI, MRVL, HPE, DELL, SNOW, RBLX, RDDT, ADBE, NFLX, CRWV, NBIS
+- **Healthcare/pharma:** LLY, UNH, ABBV, MRK, AMGN, REGN, MRNA, GILD, AZN, SYK, ABT, CI, TMO, HALO, MDT, DHR, VHT, IYH, HIMS, CVS
+- **Financials:** GS, MS, JPM, BAC, WFC, C, USB, PNC, RF, BLK, BRK-B, AXP, V, MA, PYPL, SCHW, COF, IBKR, HSBC, SAN, RY, MUFG, BNS, TFC, BCS, NU, NDAQ, TOST, ARKF, FIS, XYZ, LDI, IVZ, KBE, IAK, SYF, VFH
+- **China/EM:** TCEHY, DIDIY, JD, BIDU, MCHI, FXI, PDD, EDU, PONY, BEKE, CWEB, KWEB
+- **Cannabis/psychedelics:** MSOS, DFTX, CMPS, ATAI, ENVB, GTBIF, GRWG, GHRS, LFLH
+- **Real estate:** VNQI, REET, URE, VNQ, ZG, COMP, IYR
+- **Nuclear cluster:** SMR, SMUP, SMU, OKLO, RYCEY (full SMR discovery stack)
+- **Japanese/global:** FANUY, NTDOF, KONMY, NTDOY, YASKY, KYCCF, DNZOY, SEKEY, SIEGY, SBGSY, ENGIY, IBDRY, SOBKY, MUFG
+
+### Output Folders
+- `output/charts/` — created for daily scan chart screenshots
+- `output/discovery_charts/` — created for discovery engine chart screenshots
+
+### Key Analysis & Observations (2026-06-02)
+- **SMR +20%** confirmed nuclear/power demand theme; URAA + VSTL flagged by main engine as downstream plays
+- **Discovery engine first run:** Surfaced BWXT (MA250 tap, nuclear), UTSL (MA464 bounce +5.69%), ISRG (weekly MA200), ETSY (MA884), PENN (MA884), RIOT/MARA (crypto miners)
+- **Top setups identified:** LAC (breakout, MA420 base), EOLS (SMA coil), VSTL (nuclear/Vistra), BWXT (MA250 tap), UTSL (MA464 bounce), SNAP (coiled), RIG (pullback to support)
+- **Bear ETFs kept in universe** — confirmed valid as market sentiment overlay, not noise
+- Only 2 of 84 discovery signals overlapped with main ranker — engines are surfacing complementary, non-overlapping information
+
 ## 2026-06-01 / 2026-06-02
 
 ### Muted Tickers
