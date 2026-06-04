@@ -74,7 +74,7 @@
 |---|---|---|---|
 | `ENGINE_LOOKBACK` | `130` | `999` | Max history per cycle |
 | `ENGINE_SCAN_WORKERS` | `12` (not passed) | `3` | Memory safety with lookback=999 |
-| `ENGINE_TIMEFRAMES` | `1m,5m,...,1mo` | `5m,15m,...,1mo` | 1m removed (no signal value) |
+| `ENGINE_TIMEFRAMES` | `1m,5m,...,1mo` | `1m,5m,15m,...,1mo` |
 | `ENGINE_MIN_TF_MINUTES` | `15` | `5` | Allow 5m signals in rankings |
 | `ENGINE_TOP_N` | `50` | `2000` | Full leaderboard |
 | `Docker CPUs` | `4` | `8` | More cores for scan workers |
