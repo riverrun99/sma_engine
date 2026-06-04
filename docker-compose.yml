@@ -66,6 +66,7 @@ services:
     working_dir: /cache
     container_name: e47_engine
     restart: unless-stopped
+    stop_grace_period: 120s
     depends_on:
       influxdb:
         condition: service_healthy
@@ -90,6 +91,15 @@ services:
       ENGINE_TIMEFRAMES: ${ENGINE_TIMEFRAMES:-5m,15m,30m,1h,1d}
       ENGINE_LOOKBACK: ${ENGINE_LOOKBACK:-130}
       ENGINE_REGIME_EVERY: ${ENGINE_REGIME_EVERY:-12}
+      ENGINE_SCAN_WORKERS: ${ENGINE_SCAN_WORKERS:-3}
+      ENGINE_REFRESH_BARS: ${ENGINE_REFRESH_BARS:-20}
+      ENGINE_MIN_TF_MINUTES: ${ENGINE_MIN_TF_MINUTES:-15}
+      HIT_MODE: ${HIT_MODE:-exact}
+      HIT_TOLERANCE: ${HIT_TOLERANCE:-0.0}
+      STREAM_ENABLED: ${STREAM_ENABLED:-false}
+      STREAM_TIMEFRAMES: ${STREAM_TIMEFRAMES:-1s,5s,15s,30s}
+      ENGINE_BACKTEST_EVERY: ${ENGINE_BACKTEST_EVERY:-0}
+      TERMINAL_UI: ${TERMINAL_UI:-true}
       TERMINAL_TOP_N: ${TERMINAL_TOP_N:-20}
       LOCAL_OUTPUT_DIR: /cache/output
       GOOGLE_SHEETS_CREDENTIALS_PATH: ${GOOGLE_SHEETS_CREDENTIALS_PATH:-}

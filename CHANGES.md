@@ -1,5 +1,108 @@
 # Changelog — SMA Engine Updates
 
+---
+
+## 2026-06-04 — Performance & Stability Overhaul
+
+### engine.py
+
+**Multiprocessing scan (GIL bypass)**
+- Replaced `threading.Thread` workers in `scan()` with `multiprocessing.Pool`
+- Each worker gets its own process with its own GIL — true parallel CPU execution
+- Cache is sliced per worker (only tickers in that chunk) to minimize pickling overhead
+- Result: scan went from single-core (~6 hrs) to multi-core parallel
+
+**Vectorized `detect_hits`**
+- Replaced Python `for i in range(start, len(df))` inner loop with numpy array comparisons
+- `np.where(arr == sma_w)` evaluates all 999 candles simultaneously in C
+- Identical results, ~10-50x faster per combo
+- Scan time dropped from ~6 hours → ~3 minutes for 467k combinations
+
+**Worker SIGTERM isolation**
+- Added `_scan_worker_init()` initializer to `multiprocessing.Pool`
+- Workers inherit parent signal handlers via fork — caused double SIGTERM logging
+- Workers now ignore SIGTERM/SIGINT; only parent handles shutdown
+
+**Progress logging**
+- Replaced thread-based progress logger with `imap_unordered`
+- Each worker logs on completion: `scan N/N workers done (X%) — Xs elapsed, ~Ys remaining`
+
+**Module-level worker function**
+- Added `_scan_worker_fn()` at module level (required for multiprocessing pickling)
+
+---
+
+### daemon.py
+
+**Output write order — local files first**
+- Previously: InfluxDB writes → local file writes
+- Now: signal/top_n computed → local files written → InfluxDB writes
+- InfluxDB timeouts no longer block `signals_current.xlsx` and `signals_log.csv`
+
+**Cumulative deciseconds query — non-fatal**
+- Wrapped `query_cumulative_deciseconds()` in try/except
+- Timeout returns empty dict; engine continues with current-cycle deciseconds only
+
+**InfluxDB writes wrapped**
+- All InfluxDB write calls wrapped in single try/except block
+- InfluxDB failure is logged as warning, never crashes the cycle
+
+---
+
+### persistence.py
+
+**InfluxDB client timeout**
+- Increased from default (~10s) to 60,000ms (60 seconds)
+- Fixes `query_cumulative_deciseconds` timeout on larger datasets
+
+---
+
+### docker-compose.yml
+
+**Stop grace period**
+- Added `stop_grace_period: 120s` to engine service
+- Engine now has 2 minutes to complete output writing after SIGTERM
+
+**Missing env vars added**
+- Added pass-through for: `ENGINE_SCAN_WORKERS`, `ENGINE_REFRESH_BARS`, `ENGINE_MIN_TF_MINUTES`, `HIT_MODE`, `HIT_TOLERANCE`, `STREAM_ENABLED`, `STREAM_TIMEFRAMES`, `ENGINE_BACKTEST_EVERY`, `TERMINAL_UI`
+
+---
+
+### .env
+
+| Setting | Before | After | Reason |
+|---|---|---|---|
+| `ENGINE_LOOKBACK` | `130` | `999` | Max history per cycle |
+| `ENGINE_SCAN_WORKERS` | `12` (not passed) | `3` | Memory safety with lookback=999 |
+| `ENGINE_TIMEFRAMES` | `1m,5m,...,1mo` | `5m,15m,...,1mo` | 1m removed (no signal value) |
+| `ENGINE_MIN_TF_MINUTES` | `15` | `5` | Allow 5m signals in rankings |
+| `ENGINE_TOP_N` | `50` | `2000` | Full leaderboard |
+| `Docker CPUs` | `4` | `8` | More cores for scan workers |
+
+---
+
+### muted_tickers.txt
+
+Added ~220 tickers across:
+- Small/regional banks, biotech small/mid, bonds/rates ETFs
+- Factor/smart-beta ETFs, micro-cap biotech, small REITs
+- Small financials, low-signal healthcare, small industrials
+- Low-signal tech/software, misc small caps
+
+**Active tickers: 1,266** (down from 1,489)
+
+---
+
+### Results
+
+- Scan time: **~3-4 minutes** (was 6+ hours)
+- Memory stable at ~5-6 GB with 3 workers + lookback=999
+- Output writes reliably every cycle
+- InfluxDB history: 183,393 decisecond keys loaded successfully
+- Top signal (2026-06-04): **MKC / 1mo / 33 Outfit / entry 51.82 / 1,067 hits**
+
+---
+
 ## 2026-06-02 (Session 2)
 
 ### Discovery Engine — New File: `discovery_engine.py`

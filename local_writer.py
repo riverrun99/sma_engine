@@ -76,9 +76,11 @@ class LocalWriter:
         self.price_tracker_path = self.output_dir / "price_tracker.json"
         self.snapshots_dir = self.output_dir / "snapshots"
         self.snapshots_dir.mkdir(parents=True, exist_ok=True)
+        self.ohlc_log_path = self.output_dir / "ohlc_log.csv"
         self._price_tracker: dict = self._load_price_tracker()
         self._ensure_log_header()
         self._ensure_ranked_log_header()
+        self._ensure_ohlc_log_header()
 
     # ── Price tracker ─────────────────────────────────────────────────────────
 
@@ -159,6 +161,68 @@ class LocalWriter:
                     writer.writerow(RANKED_LOG_COLUMNS)
             except Exception as e:
                 logging.warning(f"LocalWriter: could not create ranked log file: {e}")
+
+    def _ensure_ohlc_log_header(self) -> None:
+        """Create the OHLC log CSV with header row if it doesn't exist."""
+        if not self.ohlc_log_path.exists():
+            try:
+                with open(self.ohlc_log_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerow([
+                        "timestamp_utc", "ticker", "timeframe", "outfit",
+                        "open", "high", "low", "close", "volume",
+                        "hit_count", "convergence", "rank_score", "first_seen"
+                    ])
+            except Exception as e:
+                logging.warning(f"LocalWriter: could not create ohlc log: {e}")
+
+    def append_ohlc_log(self, top_n: list, candle_cache: dict, ts: datetime) -> None:
+        """
+        For each unique ticker in top_n, look up the latest candle bar
+        and record OHLC + volume. Only logs tickers appearing for the first time
+        (first_seen=1) or every appearance (first_seen=0).
+        """
+        ts_str = ts.isoformat()
+        try:
+            seen: set = set()
+            rows = []
+            for entry in top_n:
+                ticker = entry.get("ticker", "")
+                tf = entry.get("timeframe", "")
+                if not ticker or ticker in seen:
+                    continue
+                seen.add(ticker)
+
+                df = candle_cache.get((ticker, tf))
+                if df is None or len(df) == 0:
+                    continue
+
+                latest = df.iloc[-1]
+                periods_str = "/".join(str(p) for p in entry.get("outfit_periods", []))
+                first_seen = 1 if ticker not in self._price_tracker else 0
+
+                rows.append([
+                    ts_str,
+                    ticker,
+                    tf,
+                    periods_str,
+                    round(float(latest.get("open", 0) or 0), 4),
+                    round(float(latest.get("high", 0) or 0), 4),
+                    round(float(latest.get("low", 0) or 0), 4),
+                    round(float(latest.get("close", 0) or 0), 4),
+                    int(latest.get("volume", 0) or 0),
+                    entry.get("hit_count", ""),
+                    entry.get("convergence", ""),
+                    entry.get("rank_score", ""),
+                    first_seen,
+                ])
+
+            if rows:
+                with open(self.ohlc_log_path, "a", newline="", encoding="utf-8") as f:
+                    writer = csv.writer(f)
+                    writer.writerows(rows)
+        except Exception as e:
+            logging.warning(f"LocalWriter: ohlc log append failed: {e}")
 
     def write_snapshot(self, top_n: list, ts: datetime) -> None:
         """
@@ -448,6 +512,12 @@ class LocalWriter:
                 wp.column_dimensions["F"].width = 14
 
             wb.save(self.current_xlsx_path)
+            # Also save a timestamped archive copy
+            archive_dir = self.output_dir / "xlsx_archive"
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            ts_str = ts.strftime("%Y-%m-%d_%H-%M-%S")
+            archive_path = archive_dir / f"signals_{ts_str}.xlsx"
+            wb.save(archive_path)
         except Exception as e:
             logging.warning(f"LocalWriter: xlsx write failed: {e}")
 
@@ -458,6 +528,7 @@ class LocalWriter:
         systems: list,
         regime_label: Optional[str] = None,
         ts: Optional[datetime] = None,
+        candle_cache: Optional[dict] = None,
     ) -> None:
         """Convenience: write Current xlsx + append Log row in one call."""
         ts = ts or datetime.now(timezone.utc)
@@ -466,3 +537,5 @@ class LocalWriter:
         self.append_log_row(signal, systems, regime_label, ts)
         self.append_ranked_log(top_n, ts)
         self.write_snapshot(top_n, ts)
+        if candle_cache is not None:
+            self.append_ohlc_log(top_n, candle_cache, ts)

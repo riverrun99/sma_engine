@@ -82,7 +82,7 @@ class InfluxPersistence:
 
     def _connect(self) -> None:
         try:
-            self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
+            self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org, timeout=60_000)
             health = self._client.ping()
             if not health:
                 logging.warning(f"InfluxDB at {self.url} is not healthy — persistence disabled")

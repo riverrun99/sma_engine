@@ -211,26 +211,55 @@ def run_cycle(
     # ─── Query cumulative deciseconds (time-series persistence across cycles) ─
     # Raul's methodology accumulates deciseconds over days, not just one cycle.
     # Pull the running totals from InfluxDB so the scorer can blend them in.
-    cumulative_ds = persist.query_cumulative_deciseconds(window_days=7)
-    if cumulative_ds:
-        logging.info(f"  cumulative_ds: {len(cumulative_ds)} level keys loaded from Influx")
+    try:
+        cumulative_ds = persist.query_cumulative_deciseconds(window_days=7)
+        if cumulative_ds:
+            logging.info(f"  cumulative_ds: {len(cumulative_ds)} level keys loaded from Influx")
+    except Exception as e:
+        logging.warning(f"  cumulative_ds query failed (non-fatal): {e}")
+        cumulative_ds = {}
 
-    # ─── Influx writes ────────────────────────────────────────────────────
-    for (ticker, tf), df in engine.candle_cache.items():
-        if not df.empty:
-            persist.write_candles(ticker, tf, df)
-
-    all_hits = []
-    for entry in engine.store.all():
-        all_hits.extend(entry.hits)
-    persist.write_hits(all_hits)
-
+    # ─── Compute signal + top_n first (needed for local/sheets output) ────
     signal_dict = engine.top_signal(cumulative_ds=cumulative_ds)
-    if signal_dict is not None:
-        persist.write_signal(signal_dict, ts=cycle_ts)
     top_n_list = engine.top_n(top_n_count, cumulative_ds=cumulative_ds)
-    persist.write_top_n(top_n_list, ts=cycle_ts)
-    persist.write_system_states(engine.system_states, ts=cycle_ts)
+
+    # ─── Local file writer (always, before Influx so output is never blocked) ─
+    try:
+        local_writer.write_cycle(
+            signal_dict, top_n_list, engine.system_states,
+            regime_label=current_regime_label, ts=cycle_ts,
+            candle_cache=engine.candle_cache,
+        )
+    except Exception as e:
+        logging.warning(f"LocalWriter cycle failed: {e}")
+
+    # ─── Sheets writer (optional) ────────────────────────────────────────
+    if sheets_writer.enabled:
+        try:
+            sheets_writer.write_cycle(
+                signal_dict, top_n_list, engine.system_states,
+                regime_label=current_regime_label, ts=cycle_ts,
+            )
+        except Exception as e:
+            logging.warning(f"SheetsWriter cycle failed: {e}")
+
+    # ─── Influx writes (after local output — Influx issues won't block files) ─
+    try:
+        for (ticker, tf), df in engine.candle_cache.items():
+            if not df.empty:
+                persist.write_candles(ticker, tf, df)
+
+        all_hits = []
+        for entry in engine.store.all():
+            all_hits.extend(entry.hits)
+        persist.write_hits(all_hits)
+
+        if signal_dict is not None:
+            persist.write_signal(signal_dict, ts=cycle_ts)
+        persist.write_top_n(top_n_list, ts=cycle_ts)
+        persist.write_system_states(engine.system_states, ts=cycle_ts)
+    except Exception as e:
+        logging.warning(f"InfluxDB write failed (non-fatal): {e}")
 
     # ─── Regime refit + current label ─────────────────────────────────────
     if fit_regime and HMM_AVAILABLE:
@@ -258,25 +287,6 @@ def run_cycle(
             logging.warning(f"Regime refit failed: {e}")
 
     persist.flush()
-
-    # ─── Local file writer (always) ──────────────────────────────────────
-    try:
-        local_writer.write_cycle(
-            signal_dict, top_n_list, engine.system_states,
-            regime_label=current_regime_label, ts=cycle_ts,
-        )
-    except Exception as e:
-        logging.warning(f"LocalWriter cycle failed: {e}")
-
-    # ─── Sheets writer (optional) ────────────────────────────────────────
-    if sheets_writer.enabled:
-        try:
-            sheets_writer.write_cycle(
-                signal_dict, top_n_list, engine.system_states,
-                regime_label=current_regime_label, ts=cycle_ts,
-            )
-        except Exception as e:
-            logging.warning(f"SheetsWriter cycle failed: {e}")
 
     # ─── Terminal UI (always, last so it overlays everything) ─────────────
     scan_time = time.monotonic() - cycle_start
